@@ -15,7 +15,7 @@ services:
     depends_on:
       - postgres
     networks:
-      - prefect-network
+      - datahub_prefect-network
 
 networks:
   prefect-network:
