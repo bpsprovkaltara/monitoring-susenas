@@ -1,0 +1,26 @@
+deployments:
+  - name: daily-monitoring-susenas
+    entrypoint: src/etl_flow.py:monitoring_flow
+    work_pool:
+      name: ${PREFECT_WORK_POOL_NAME}
+      job_variables:
+        image: monitoring-susenas:latest
+        networks:
+          - prefect-network
+        env:
+          SSO_USERNAME: ${SSO_USERNAME}
+          SSO_PASSWORD: ${SSO_PASSWORD}
+          POSTGRES_USER: ${POSTGRES_USER}
+          POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: "5432"
+          POSTGRES_DB: ${POSTGRES_DB}
+    schedule:
+      cron: "0 8 * * *"
+      timezone: "Asia/Makassar"
+    parameters:
+      wil: "65"
+    tags:
+      - susenas
+      - monitoring
+      - kaltara
