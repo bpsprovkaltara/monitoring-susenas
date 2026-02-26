@@ -8,7 +8,10 @@ deployments:
         image_pull_policy: Never
         networks:
           - datahub_prefect-network
-          - bridge
+        container_create_kwargs:
+          dns:
+            - "8.8.8.8"
+            - "8.8.4.4"
         env:
           SSO_USERNAME: ${SSO_USERNAME}
           SSO_PASSWORD: ${SSO_PASSWORD}
