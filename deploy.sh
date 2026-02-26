@@ -42,7 +42,15 @@ docker run --rm \
     monitoring-susenas:latest \
     python -c "from src.database import init_db; init_db(); print('Table created.')"
 
-echo "=== 4. Deploying Prefect flow ==="
+echo "=== 4. Ensuring work pool exists ==="
+docker run --rm \
+    --network datahub_prefect-network \
+    -e PREFECT_API_URL=http://prefect-server:4200/api \
+    monitoring-susenas:latest \
+    prefect work-pool create "${PREFECT_WORK_POOL_NAME:-default-worker-pool}" \
+        --type docker 2>/dev/null || echo "  Work pool already exists, skipping."
+
+echo "=== 5. Deploying Prefect flow ==="
 docker run --rm \
     --network datahub_prefect-network \
     -e PREFECT_API_URL=http://prefect-server:4200/api \
@@ -58,11 +66,11 @@ docker run --rm \
     monitoring-susenas:latest \
     prefect deploy --all
 
-echo "=== 5. Starting Streamlit dashboard ==="
+echo "=== 6. Starting Streamlit dashboard ==="
 docker compose up -d streamlit
 
 echo ""
-echo "=== Deployment complete! ==="
+echo "=== 7. Deployment complete! ==="
 echo "  - Database:     PostgreSQL (shared with Prefect)"
 echo "  - Prefect flow: deployed with cron '0 8 * * *' (Asia/Makassar)"
 echo "  - Streamlit:    http://localhost:${STREAMLIT_PORT:-8501}"
