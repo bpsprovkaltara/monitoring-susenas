@@ -51,6 +51,9 @@ docker run --rm \
         --type docker 2>/dev/null || echo "  Work pool already exists, skipping."
 
 echo "=== 5. Deploying Prefect flow ==="
+WORK_POOL_NAME="${PREFECT_WORK_POOL_NAME:-default-worker-pool}"
+envsubst '${PREFECT_WORK_POOL_NAME} ${SSO_USERNAME} ${SSO_PASSWORD} ${POSTGRES_USER} ${POSTGRES_PASSWORD} ${POSTGRES_DB}' \
+    < "${SCRIPT_DIR}/prefect.yaml" > "${SCRIPT_DIR}/prefect.rendered.yaml"
 docker run --rm \
     --network datahub_prefect-network \
     -e PREFECT_API_URL=http://prefect-server:4200/api \
@@ -61,10 +64,11 @@ docker run --rm \
     -e POSTGRES_HOST=postgres \
     -e POSTGRES_PORT=5432 \
     -e POSTGRES_DB="${POSTGRES_DB}" \
-    -e PREFECT_WORK_POOL_NAME="${PREFECT_WORK_POOL_NAME:-default-worker-pool}" \
-    -v "${SCRIPT_DIR}/prefect.yaml:/app/prefect.yaml" \
+    -e PREFECT_WORK_POOL_NAME="${WORK_POOL_NAME}" \
+    -v "${SCRIPT_DIR}/prefect.rendered.yaml:/app/prefect.yaml" \
     monitoring-susenas:latest \
     prefect deploy --all
+rm -f "${SCRIPT_DIR}/prefect.rendered.yaml"
 
 echo "=== 6. Starting Streamlit dashboard ==="
 docker compose up -d streamlit
