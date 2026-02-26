@@ -8,6 +8,7 @@ deployments:
         image_pull_policy: Never
         networks:
           - datahub_prefect-network
+          - bridge
         env:
           SSO_USERNAME: ${SSO_USERNAME}
           SSO_PASSWORD: ${SSO_PASSWORD}
