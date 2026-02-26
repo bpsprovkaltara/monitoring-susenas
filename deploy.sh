@@ -63,19 +63,23 @@ r = httpx.get(f'{api}/work_pools/{pool_name}')
 r.raise_for_status()
 pool = r.json()
 template = pool.get('base_job_template', {})
-
-# Set image_pull_policy default to Never
 variables = template.get('variables', {})
 props = variables.get('properties', {})
+
+# Set image_pull_policy default to Never
 if 'image_pull_policy' in props:
     props['image_pull_policy']['default'] = 'Never'
     print('  image_pull_policy set to Never')
 
-# Set dns in job_configuration to enable external DNS resolution
+# Set container_create_kwargs default with dns for external resolution
+if 'container_create_kwargs' in props:
+    props['container_create_kwargs']['default'] = {'dns': ['8.8.8.8', '8.8.4.4']}
+    print('  container_create_kwargs.dns set to [8.8.8.8, 8.8.4.4]')
+
+# Remove stale dns key from job_configuration if present
 job_config = template.get('job_configuration', {})
-job_config.setdefault('dns', ['8.8.8.8', '8.8.4.4'])
+job_config.pop('dns', None)
 template['job_configuration'] = job_config
-print('  dns set to [8.8.8.8, 8.8.4.4]')
 
 r2 = httpx.patch(f'{api}/work_pools/{pool_name}', json={'base_job_template': template})
 r2.raise_for_status()
