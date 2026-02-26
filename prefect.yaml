@@ -6,7 +6,7 @@ deployments:
       job_variables:
         image: monitoring-susenas:latest
         networks:
-          - prefect-network
+          - datahub_prefect-network
         env:
           SSO_USERNAME: ${SSO_USERNAME}
           SSO_PASSWORD: ${SSO_PASSWORD}

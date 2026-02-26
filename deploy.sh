@@ -33,7 +33,7 @@ docker build -t monitoring-susenas:latest .
 
 echo "=== 3. Initializing database table ==="
 docker run --rm \
-    --network prefect-network \
+    --network datahub_prefect-network \
     -e POSTGRES_USER="${POSTGRES_USER}" \
     -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
     -e POSTGRES_HOST=postgres \
@@ -44,7 +44,7 @@ docker run --rm \
 
 echo "=== 4. Deploying Prefect flow ==="
 docker run --rm \
-    --network prefect-network \
+    --network datahub_prefect-network \
     -e PREFECT_API_URL=http://prefect-server:4200/api \
     -e SSO_USERNAME="${SSO_USERNAME}" \
     -e SSO_PASSWORD="${SSO_PASSWORD}" \
@@ -68,7 +68,7 @@ echo "  - Prefect flow: deployed with cron '0 8 * * *' (Asia/Makassar)"
 echo "  - Streamlit:    http://localhost:${STREAMLIT_PORT:-8501}"
 echo ""
 echo "To trigger a manual run:"
-echo "  docker run --rm --network prefect-network \\"
+echo "  docker run --rm --network datahub_prefect-network \\"
 echo "    -e POSTGRES_USER=${POSTGRES_USER} \\"
 echo "    -e POSTGRES_PASSWORD=*** \\"
 echo "    -e POSTGRES_HOST=postgres \\"
