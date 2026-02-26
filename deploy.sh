@@ -50,26 +50,36 @@ docker run --rm \
     prefect work-pool create "${PREFECT_WORK_POOL_NAME:-default-worker-pool}" \
         --type docker 2>/dev/null || echo "  Work pool already exists, skipping."
 
-echo "=== 4a. Setting image_pull_policy=Never on work pool ==="
+echo "=== 4a. Configuring work pool defaults ==="
 docker run --rm \
     --network datahub_prefect-network \
     -e PREFECT_API_URL=http://prefect-server:4200/api \
     monitoring-susenas:latest \
     python -c "
-import httpx, json, sys
+import httpx, json
 api = 'http://prefect-server:4200/api'
 pool_name = '${PREFECT_WORK_POOL_NAME:-default-worker-pool}'
 r = httpx.get(f'{api}/work_pools/{pool_name}')
 r.raise_for_status()
 pool = r.json()
 template = pool.get('base_job_template', {})
+
+# Set image_pull_policy default to Never
 variables = template.get('variables', {})
 props = variables.get('properties', {})
 if 'image_pull_policy' in props:
     props['image_pull_policy']['default'] = 'Never'
+    print('  image_pull_policy set to Never')
+
+# Set dns in job_configuration to enable external DNS resolution
+job_config = template.get('job_configuration', {})
+job_config.setdefault('dns', ['8.8.8.8', '8.8.4.4'])
+template['job_configuration'] = job_config
+print('  dns set to [8.8.8.8, 8.8.4.4]')
+
 r2 = httpx.patch(f'{api}/work_pools/{pool_name}', json={'base_job_template': template})
 r2.raise_for_status()
-print('  image_pull_policy set to Never')
+print('  Work pool configured successfully')
 "
 
 echo "=== 5. Deploying Prefect flow ==="
