@@ -5,6 +5,7 @@ deployments:
       name: ${PREFECT_WORK_POOL_NAME}
       job_variables:
         image: monitoring-susenas:latest
+        image_pull_policy: Never
         networks:
           - datahub_prefect-network
         env:
