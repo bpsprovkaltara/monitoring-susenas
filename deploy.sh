@@ -50,6 +50,28 @@ docker run --rm \
     prefect work-pool create "${PREFECT_WORK_POOL_NAME:-default-worker-pool}" \
         --type docker 2>/dev/null || echo "  Work pool already exists, skipping."
 
+echo "=== 4a. Setting image_pull_policy=Never on work pool ==="
+docker run --rm \
+    --network datahub_prefect-network \
+    -e PREFECT_API_URL=http://prefect-server:4200/api \
+    monitoring-susenas:latest \
+    python -c "
+import httpx, json, sys
+api = 'http://prefect-server:4200/api'
+pool_name = '${PREFECT_WORK_POOL_NAME:-default-worker-pool}'
+r = httpx.get(f'{api}/work_pools/{pool_name}')
+r.raise_for_status()
+pool = r.json()
+template = pool.get('base_job_template', {})
+variables = template.get('variables', {})
+props = variables.get('properties', {})
+if 'image_pull_policy' in props:
+    props['image_pull_policy']['default'] = 'Never'
+r2 = httpx.patch(f'{api}/work_pools/{pool_name}', json={'base_job_template': template})
+r2.raise_for_status()
+print('  image_pull_policy set to Never')
+"
+
 echo "=== 5. Deploying Prefect flow ==="
 WORK_POOL_NAME="${PREFECT_WORK_POOL_NAME:-default-worker-pool}"
 envsubst '${PREFECT_WORK_POOL_NAME} ${SSO_USERNAME} ${SSO_PASSWORD} ${POSTGRES_USER} ${POSTGRES_PASSWORD} ${POSTGRES_DB}' \
